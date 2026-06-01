@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: node-red-settings
+  namespace: node-red
+data:
+  settings.js: |
+    module.exports = {
+      uiPort: process.env.PORT || 1880,
+      // adminAuth reads the bcrypt hash from the mounted Secret.
+      adminAuth: {
+        type: "credentials",
+        users: [{
+          username: "admin",
+          password: require("fs").readFileSync("/etc/node-red-admin/password-hash", "utf8").trim(),
+          permissions: "*"
+        }]
+      },
+      flowFile: "flows.json",
+      functionGlobalContext: {},
+    };

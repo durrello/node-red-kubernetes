@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node-red
+  namespace: node-red
+  labels:
+    app: node-red
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: node-red
+  template:
+    metadata:
+      labels:
+        app: node-red
+    spec:
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: node-red
+          image: nodered/node-red:4.0
+          ports:
+            - containerPort: 1880
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: settings
+              mountPath: /data/settings.js
+              subPath: settings.js
+            - name: admin
+              mountPath: /etc/node-red-admin
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 1880
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: node-red-data
+        - name: settings
+          configMap:
+            name: node-red-settings
+        - name: admin
+          secret:
+            secretName: node-red-admin
+            items:
+              - key: password-hash
+                path: password-hash
